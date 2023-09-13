@@ -1,0 +1,56 @@
+---
+- hosts: splunk_servers
+  become: yes
+  tasks:
+
+    - name: Ensure the directory /opt/splunk/files exists
+      file:
+        path: /opt/splunk/files/
+        state: directory
+
+    - name: Extract splunk-install-files.tar.gz to /opt/splunk/files/
+      unarchive:
+        src: /path/to/your/local/splunk-install-files.tar.gz
+        dest: /opt/splunk/files/
+        remote_src: no
+
+    - name: Install Splunk
+      command: /opt/splunk/files/splunkforwarder/bin/splunk start --accept-license
+      become: yes
+      become_method: sudo
+      ignore_errors: yes
+
+    - name: Create Splunk service
+      command: /opt/splunk/files/splunkforwarder/bin/splunk enable boot-start
+      become: yes
+      become_method: sudo
+
+    - name: Ensure Splunk service is started
+      service:
+        name: Splunkd
+        state: started
+
+    - name: Get Splunk Status
+      command: /opt/splunk/files/splunkforwarder/bin/splunk status
+      register: splunk_status
+      changed_when: false
+
+    - debug:
+        msg: "{{ splunk_status.stdout_lines }}"
+
+    - name: Check if Splunk is installed
+      command: which splunk
+      register: splunk_installed
+      failed_when: splunk_installed.rc != 0
+      changed_when: false
+
+    - debug:
+        msg: "Splunk is installed at {{ splunk_installed.stdout }}"
+
+    - name: Get version of Splunk forwarder
+      command: /opt/splunk/files/splunkforwarder/bin/splunk version
+      register: splunk_version
+      changed_when: false
+
+    - debug:
+        msg: "Splunk Forwarder version is: {{ splunk_version.stdout }}"
