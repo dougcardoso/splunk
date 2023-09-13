@@ -1,0 +1,22 @@
+---
+- hosts: splunk_forwarders
+  become: yes
+  tasks:
+    - name: Update Splunk outputs.conf for forwarding data
+      blockinfile:
+        path: /opt/splunk/files/splunkforwarder/etc/system/local/outputs.conf
+        create: yes
+        block: |
+          [tcpout]
+          defaultGroup = default_indexers
+
+          [tcpout:default_indexers]
+          server = your_indexer_server:9997
+      notify:
+        - restart splunk
+
+  handlers:
+    - name: restart splunk
+      service:
+        name: Splunkd
+        state: restarted
