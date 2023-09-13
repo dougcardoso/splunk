@@ -1,0 +1,18 @@
+---
+- hosts: splunk_forwarders
+  become: yes
+  tasks:
+    - name: Stop Splunk Forwarder
+      command: /apps/splunk/bin/splunk stop
+      args:
+        chdir: /apps/splunk/bin/
+
+    - name: Check Splunk Forwarder Status
+      command: /apps/splunk/bin/splunk status
+      args:
+        chdir: /apps/splunk/bin/
+      register: splunk_status
+      changed_when: false
+
+    - debug:
+        msg: "{{ splunk_status.stdout_lines }}"
