@@ -1,56 +1,37 @@
 ---
-- hosts: splunk_servers
-  become: yes
+- name: Splunk Preparation and Installation
+  hosts: all
+  vars:
+    SPLUNK_HOME: /app/splunk/
   tasks:
-
-    - name: Ensure the directory /opt/splunk/files exists
+    - name: Create directory for install files
       file:
-        path: /opt/splunk/files/
+        path: "{{ SPLUNK_HOME }}install-files"
         state: directory
+        mode: '0755'
 
-    - name: Extract splunk-install-files.tar.gz to /opt/splunk/files/
+    - name: Download splunk.tar.gz
+      get_url:
+        url: https://sample/splunkforwardfile/splunk.tar.gz
+        dest: "{{ SPLUNK_HOME }}install-files/splunk.tar.gz"
+
+    - name: Extract splunk.tar.gz
       unarchive:
-        src: /path/to/your/local/splunk-install-files.tar.gz
-        dest: /opt/splunk/files/
-        remote_src: no
+        src: "{{ SPLUNK_HOME }}install-files/splunk.tar.gz"
+        dest: "{{ SPLUNK_HOME }}install-files/"
+        remote_src: yes
 
-    - name: Install Splunk
-      command: /opt/splunk/files/splunkforwarder/bin/splunk start --accept-license
-      become: yes
-      become_method: sudo
-      ignore_errors: yes
+    - name: Download deploymentclient.conf
+      get_url:
+        url: https://sample/splunkforwardfile/deploymentclient.conf
+        dest: "{{ SPLUNK_HOME }}install-files/deploymentclient.conf"
 
-    - name: Create Splunk service
-      command: /opt/splunk/files/splunkforwarder/bin/splunk enable boot-start
-      become: yes
-      become_method: sudo
+    - name: Download log-local.cfg
+      get_url:
+        url: https://sample/splunkforwardfile/log-local.cfg
+        dest: "{{ SPLUNK_HOME }}install-files/log-local.cfg"
 
-    - name: Ensure Splunk service is started
-      service:
-        name: Splunkd
-        state: started
-
-    - name: Get Splunk Status
-      command: /opt/splunk/files/splunkforwarder/bin/splunk status
-      register: splunk_status
-      changed_when: false
-
-    - debug:
-        msg: "{{ splunk_status.stdout_lines }}"
-
-    - name: Check if Splunk is installed
-      command: which splunk
-      register: splunk_installed
-      failed_when: splunk_installed.rc != 0
-      changed_when: false
-
-    - debug:
-        msg: "Splunk is installed at {{ splunk_installed.stdout }}"
-
-    - name: Get version of Splunk forwarder
-      command: /opt/splunk/files/splunkforwarder/bin/splunk version
-      register: splunk_version
-      changed_when: false
-
-    - debug:
-        msg: "Splunk Forwarder version is: {{ splunk_version.stdout }}"
+    - name: Download user-seed.conf
+      get_url:
+        url: https://sample/splunkforwardfile/user-seed.conf
+        dest: "{{ SPLUNK_HOME }}install-files/user-seed.conf"
